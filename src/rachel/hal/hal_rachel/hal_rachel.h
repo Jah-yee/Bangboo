@@ -86,6 +86,11 @@ private:
     void _system_config_init();
     void _sum_up();
     
+    // 日志显示控制（单行刷新模式）
+    bool _log_single_line_mode = false;
+    int16_t _log_single_line_x = 0;
+    int16_t _log_single_line_y = 0;
+
     // 音频相关私有方法
     static void _audioPlaybackTask(void* parameter);
     static bool _playWavFileInTask(FS& fs, const char* filename);
@@ -135,6 +140,14 @@ public:
         _audio_init();
         _system_config_init();
         _sum_up();
+    }
+
+    // 设置单行日志模式与位置
+    inline void setLogSingleLineMode(bool enabled, int16_t x = 0, int16_t y = 0)
+    {
+        _log_single_line_mode = enabled;
+        _log_single_line_x = x;
+        _log_single_line_y = y;
     }
 
     void reboot() override;

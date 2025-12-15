@@ -1,11 +1,11 @@
 /**
  * @file apps.h
- * @author Forairaaaaa
+ * @author Bowen
  * @brief
- * @version 0.1
- * @date 2023-11-04
+ * @version 0.2
+ * @date 2025-10-24
  *
- * @copyright Copyright (c) 2023
+ * @copyright Copyright (c) 2025
  *
  */
 #pragma once
@@ -29,13 +29,14 @@
 void rachel_app_install_callback(MOONCAKE::Mooncake* mooncake)
 {
     mooncake->installApp(new MOONCAKE::APPS::AppSettings_Packer);
-    //mooncake->installApp(new MOONCAKE::APPS::AppMusic_Packer);
+    
     mooncake->installApp(new MOONCAKE::APPS::AppBangboo_Packer);
     mooncake->installApp(new MOONCAKE::APPS::AppTimeview_Packer);
     //mooncake->installApp(new MOONCAKE::APPS::AppImutest_Packer);
     //mooncake->installApp(new MOONCAKE::APPS::AppAsciiart_Packer);
-    mooncake->installApp(new MOONCAKE::APPS::AppGenshin_Packer);
+    //mooncake->installApp(new MOONCAKE::APPS::AppGenshin_Packer);
     mooncake->installApp(new MOONCAKE::APPS::AppRecorder_Packer);
+    mooncake->installApp(new MOONCAKE::APPS::AppMusic_Packer);
     mooncake->installApp(new MOONCAKE::APPS::AppPoweroff_Packer);
     
     /* Install app locator(Don't remove) */

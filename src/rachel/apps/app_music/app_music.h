@@ -19,6 +19,18 @@ namespace MOONCAKE::APPS
      */
     class AppMusic : public APP_BASE
     {
+    private:
+        struct Data_t
+        {
+            std::vector<std::string> wavList;
+            int currentIndex = 0;
+            bool startWasPressed = false;
+            bool rightWasPressed = false;
+            bool selectWasPressed = false;
+            unsigned long lastUiUpdateMs = 0;
+        };
+        Data_t _data;
+
     public:
         void onCreate() override;
         void onResume() override;

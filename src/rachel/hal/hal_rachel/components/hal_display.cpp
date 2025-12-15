@@ -12,6 +12,8 @@
 #include "../hal_rachel.h"
 #include <Arduino.h>
 #include "../hal_config.h"
+// 启动图：使用设置页的内置 PNG 资源（page_init_emptyos）
+#include "../../../apps/app_settings/assets/page_init_emptyos.hpp"
 
 class LGFX_Rachel : public lgfx::LGFX_Device
 {
@@ -77,6 +79,8 @@ void HAL_Rachel::_disp_init()
     _canvas->createSprite(_display->width(), _display->height());
 
     HAL_LOGGER_INIT();
+    // 可选：将日志改为单行刷新模式，固定在顶部一行
+    setLogSingleLineMode(true, 0, 110);
     _disp_logo();
     HAL_LOG_INFO("bangboo init");
 }
@@ -85,18 +89,9 @@ static const std::string _logo = R"()";
 
 void HAL_Rachel::_disp_logo()
 {
-    _canvas->setFont(&fonts::Font0);
-    _canvas->setTextColor(TFT_ORANGE, TFT_BLACK);
-
-    for (int i = 0; i < _logo.size(); i++)
-    {
-        _canvas->printf("%c", _logo[i]);
-        if (i % 20 == 0)
-            _canvas->pushSprite(0, 0);
-    }
-    _canvas->printf("\n- Bangboo Starting...\n");
-    _canvas->printf("\n- @Developer YBW\n");
-    _canvas->printf("\n- @build at %s %s\n\n", __TIME__, __DATE__);
+    // 清屏并绘制启动图片
+    _canvas->fillScreen(TFT_BLACK);
+    _canvas->drawPng(page_init_emptyos, page_init_emptyos_size);
     _canvas->pushSprite(0, 0);
 }
 

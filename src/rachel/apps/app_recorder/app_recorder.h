@@ -10,6 +10,11 @@
  */
 #include <mooncake.h>
 #include "../assets/icons/icons.h"
+#include "assets/finish.hpp"
+#include "assets/pause.hpp"
+#include "assets/record.hpp"
+#include "assets/resume.hpp"
+#include "assets/set.hpp"
 #include "assets/icon_app_recorder.hpp"
 namespace MOONCAKE::APPS
 {
@@ -30,6 +35,10 @@ namespace MOONCAKE::APPS
             int durationSeconds = 5;
             char lastSavedPath[96] = {0};
             unsigned long recStartMs = 0;
+            bool isPaused = false;
+            bool rightWasPressed = false;
+            unsigned long elapsedMsAccum = 0;
+            unsigned long lastResumeMs = 0;
         };
         Data_t _data;
 

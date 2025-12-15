@@ -108,8 +108,8 @@ bool M5EchoBase::i2s_driver_init(int sample_rate)
     i2s_cfg.channel_format       = I2S_CHANNEL_FMT_RIGHT_LEFT;
     i2s_cfg.communication_format = I2S_COMM_FORMAT_STAND_I2S;
     i2s_cfg.intr_alloc_flags     = ESP_INTR_FLAG_LEVEL1;
-    i2s_cfg.dma_buf_count        = 8;
-    i2s_cfg.dma_buf_len          = 256;
+    i2s_cfg.dma_buf_count        = 16;
+    i2s_cfg.dma_buf_len          = 512;
     i2s_cfg.use_apll             = false;
     i2s_cfg.tx_desc_auto_clear   = false;
     i2s_cfg.fixed_mclk           = 0;

@@ -61,13 +61,28 @@
     _canvas->setCursor(0, 0)
 
 #define HAL_LOG(fmt, args...)                                                                                                  \
-    _canvas->setTextColor(TFT_LIGHTGRAY, TFT_BLACK);                                                                           \
-    _canvas->printf(fmt, ##args);                                                                                              \
-    _canvas->print('\n');                                                                                                      \
-    _canvas->pushSprite(0, 0)
+    if (_log_single_line_mode)                                                                                                 \
+    {                                                                                                                          \
+        _canvas->setTextColor(TFT_LIGHTGRAY, TFT_BLACK);                                                                       \
+        _canvas->printf(fmt, ##args);                                                                                          \
+        _canvas->pushSprite(0, 0);                                                                                             \
+    }                                                                                                                          \
+    else                                                                                                                       \
+    {                                                                                                                          \
+        _canvas->setTextColor(TFT_LIGHTGRAY, TFT_BLACK);                                                                       \
+        _canvas->printf(fmt, ##args);                                                                                          \
+        _canvas->print('\n');                                                                                                  \
+        _canvas->pushSprite(0, 0);                                                                                             \
+    }
 
 #define HAL_LOG_TAG_START()                                                                                                    \
     _canvas->setTextColor(TFT_LIGHTGRAY, TFT_BLACK);                                                                           \
+    if (_log_single_line_mode)                                                                                                 \
+    {                                                                                                                          \
+        int16_t __h = _canvas->fontHeight();                                                                                   \
+        _canvas->fillRect(0, _log_single_line_y, _canvas->width(), __h, TFT_BLACK);                                            \
+        _canvas->setCursor(_log_single_line_x, _log_single_line_y);                                                            \
+    }                                                                                                                          \
     _canvas->print(" [")
 
 #define HAL_LOG_TAG_END()                                                                                                      \
