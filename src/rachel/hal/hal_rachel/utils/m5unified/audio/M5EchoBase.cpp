@@ -102,6 +102,8 @@ bool M5EchoBase::es8311_codec_init(int sample_rate)
 bool M5EchoBase::i2s_driver_init(int sample_rate)
 {
     // Initialize I2S driver
+    i2s_cfg = {};
+    i2s_pin_cfg = {};
     i2s_cfg.mode                 = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX);
     i2s_cfg.sample_rate          = (uint32_t)sample_rate;
     i2s_cfg.bits_per_sample      = I2S_BITS_PER_SAMPLE_16BIT;
