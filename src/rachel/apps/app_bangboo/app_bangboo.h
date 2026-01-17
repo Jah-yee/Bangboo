@@ -111,6 +111,7 @@ namespace MOONCAKE::APPS
             unsigned long lastTime = 0;               // 上一次检测时间
             unsigned long shakeStartTime = 0;         // 摇晃开始时间
             unsigned long triggerStartTime = 0;       // 触发开始时间
+            unsigned long shakeCooldownUntil = 0;     // 摇晃冷却结束时间
             float lastAccelX = 0.0f;                  // 上一次加速度X
             float lastAccelY = 0.0f;                  // 上一次加速度Y
             float lastAccelZ = 0.0f;                  // 上一次加速度Z
@@ -118,6 +119,7 @@ namespace MOONCAKE::APPS
             static constexpr float SHAKE_THRESHOLD = 2.8f;  // 摇晃阈值 (m/s²)
             static constexpr unsigned long SHAKE_DETECT_TIME = 500;  // 检测时间 0.5s
             static constexpr float SHAKE_DECAY = 0.80f;     // 摇晃强度衰减系数
+            static constexpr unsigned long SHAKE_COOLDOWN_TIME = 1200;  // 触发后冷却时间
 
         };
         Data_t _data;
