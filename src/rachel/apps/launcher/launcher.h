@@ -44,11 +44,14 @@ namespace MOONCAKE::APPS
             // App open and close anim
             LVGL::Anim_Path app_anim;
             
-            // Auto startup
+            // Auto startup：无操作一段时间后自动进入 Bangboo，适合注意力漂移（刷手机等）后回来再看一眼。
+            // 流程：last_input_time 被任意按键/摇晃更新 → 无操作超过 (delay - HINT_LEAD) 时先显示「即将进入」→ 到点执行 createAndStartApp。
             bool auto_startup_enabled = true;
-            uint32_t auto_startup_delay = 10000;  // 10秒无操作后自动启动
-            uint32_t last_input_time = 0;  // 最后一次按钮操作时间
-            std::string auto_startup_app_name = "Bangboo";  // 要自动启动的app名称
+            uint32_t auto_startup_delay = 60000;  // 无操作多久后自动进 App（60 秒，避免 10 秒太短误触）
+            uint32_t last_input_time = 0;         // 最后一次有操作的时间（按键或摇晃都会更新）
+            std::string auto_startup_app_name = "Bangboo";
+            bool auto_startup_hint_visible = false;  // 由 _update_menu 根据剩余时间设置，供状态栏渲染「即将进入 xxx」
+            static constexpr uint32_t AUTO_STARTUP_HINT_LEAD_MS = 3000;  // 提前几秒在状态栏出提示，让过渡更顺
         };
         Data_t _data;
         void _update_clock(bool updateNow = false);
