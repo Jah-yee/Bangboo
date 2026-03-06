@@ -21,12 +21,15 @@ void SelectMenuRenderCb_AlignLeft::renderCallback(const std::vector<SMOOTH_MENU:
     // Clear
     HAL::GetCanvas()->fillScreen(THEME_COLOR_BLACK);
 
-    // Render items
-    HAL::GetCanvas()->setTextColor(THEME_COLOR_LIGHT, THEME_COLOR_BLACK);
+    // Render items（Settings 等使用本 callback；Quit 项用红色突出，便于一眼看到）
     HAL::GetCanvas()->setTextSize(1);
     HAL::GetCanvas()->setTextDatum(textdatum_t::top_left);
     for (int i = 0; i < menuItemList.size(); i++)
     {
+        if (menuItemList[i]->tag == "Quit")
+            HAL::GetCanvas()->setTextColor(THEME_COLOR_RED, THEME_COLOR_BLACK);
+        else
+            HAL::GetCanvas()->setTextColor(THEME_COLOR_LIGHT, THEME_COLOR_BLACK);
         HAL::GetCanvas()->drawString(menuItemList[i]->tag.c_str(), menuItemList[i]->x, menuItemList[i]->y - camera.y);
     }
 
