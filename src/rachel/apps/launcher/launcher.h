@@ -49,6 +49,22 @@ namespace MOONCAKE::APPS
             uint32_t auto_startup_delay = 10000;  // 10秒无操作后自动启动
             uint32_t last_input_time = 0;  // 最后一次按钮操作时间
             std::string auto_startup_app_name = "Bangboo";  // 要自动启动的app名称
+
+            // 方向性摇晃当作「左键/右键」用：只在 Launcher 里生效，不碰 HAL，也不影响其他 App。
+            // 左晃 = 上一项（等同 SELECT），右晃 = 下一项（等同 RIGHT），一次晃只动一个格子。
+            enum ShakeNavState_t { SHAKE_NAV_IDLE, SHAKE_NAV_DETECTING };
+            ShakeNavState_t shake_nav_state = SHAKE_NAV_IDLE;
+            uint32_t shake_nav_start_time = 0;
+            uint32_t shake_nav_cooldown_until = 0;
+            float shake_nav_intensity = 0.0f;
+            float shake_nav_last_accel_x = 0.0f, shake_nav_last_accel_y = 0.0f, shake_nav_last_accel_z = 0.0f;
+            uint32_t shake_nav_last_time = 0;
+            float shake_nav_sum_accel_x = 0.0f;  // 检测窗内 accelX 累加，用来区分左晃（负）和右晃（正）
+            static constexpr float SHAKE_NAV_THRESHOLD = 2.8f;   // 强度超过这个才算一次晃
+            static constexpr uint32_t SHAKE_NAV_DETECT_MS = 140;   // 持续这么久就出结果，稍短一点让反应更跟手，仍能防误触
+            static constexpr uint32_t SHAKE_NAV_COOLDOWN_MS = 480;   // 触发后这段时间内不再响应；略短一点方便连续晃两次时更顺
+            static constexpr uint32_t SHAKE_NAV_DETECT_TIMEOUT_MS = 1500; // 检测超时，防止卡在 DETECTING
+            static constexpr float SHAKE_NAV_DECAY = 0.80f;           // 强度衰减，避免残留
         };
         Data_t _data;
         void _update_clock(bool updateNow = false);
@@ -56,6 +72,8 @@ namespace MOONCAKE::APPS
         void _update_menu();
         void _destroy_menu();
         void _play_app_anim(bool open);
+        /** 检测本帧是否有「左晃/右晃」可当作一次菜单滑动。返回值：-1 左晃(上一项)，0 无，1 右晃(下一项)。内部有冷却，一次只产出一个方向。 */
+        int _get_shake_navigation();
 
     public:
         void onCreate() override;
