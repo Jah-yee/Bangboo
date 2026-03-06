@@ -67,7 +67,7 @@ public:
             HAL::GetCanvas()->setTextSize(2);
             HAL::GetCanvas()->setTextColor(TFT_WHITE, THEME_COLOR_NIGHT);
             if (show_hint)
-                HAL::GetCanvas()->drawCenterString("即将进入 Bangboo", 120, rect_y + 4, &fonts::Font0);
+                HAL::GetCanvas()->drawCenterString("→ Bangboo", 120, rect_y + 4, &fonts::Font0);
             else if (_clock)
                 HAL::GetCanvas()->drawCenterString(_clock->c_str(), 120, rect_y + 4, &fonts::Font0);
         }
