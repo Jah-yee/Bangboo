@@ -100,7 +100,7 @@ void Launcher::_update_menu()
             _data.long_press_right_last_repeat = 0;
         }
 
-        // Update navigation - 适应新的三键配置；支持长按快速滚动（按住超过阈值后按名单连续切，音效密集如秒表哒哒哒）
+        // Update navigation - 适应新的三键配置；支持长按快速滚动（按住超过阈值后按名单连续切，快速滚动时不播音效）
         // SELECT 键向前导航
         if (HAL::GetButton(GAMEPAD::BTN_SELECT))
         {
@@ -116,13 +116,12 @@ void Launcher::_update_menu()
             }
             else
             {
-                // 持续按住：超过阈值则进入快速滚动，按间隔节流，每步都播音效
+                // 持续按住：超过阈值则进入快速滚动，按间隔节流，不播音效，自然切过去即可
                 uint32_t hold_ms = now - _data.long_press_select_hold_start;
                 if (hold_ms >= Data_t::LONG_PRESS_MS &&
                     (now - _data.long_press_select_last_repeat) >= Data_t::LONG_PRESS_REPEAT_MS)
                 {
                     _data.long_press_select_last_repeat = now;
-                    HAL::PlayWavFile("/system_audio/Klick.wav");
                     _data.menu->goLast();
                 }
             }
@@ -147,7 +146,6 @@ void Launcher::_update_menu()
                     (now - _data.long_press_right_last_repeat) >= Data_t::LONG_PRESS_REPEAT_MS)
                 {
                     _data.long_press_right_last_repeat = now;
-                    HAL::PlayWavFile("/system_audio/Klick.wav");
                     _data.menu->goNext();
                 }
             }

@@ -57,7 +57,7 @@ namespace MOONCAKE::APPS
             uint32_t long_press_right_hold_start = 0;    // RIGHT 同上
             uint32_t long_press_right_last_repeat = 0;
             static constexpr uint32_t LONG_PRESS_MS = 550;        // 按住超过此时长才进入快速滚动，避免与单击误触
-            static constexpr uint32_t LONG_PRESS_REPEAT_MS = 130; // 快速滚动时每隔多久切一个，类似秒表哒哒哒的节奏
+            static constexpr uint32_t LONG_PRESS_REPEAT_MS = 130; // 快速滚动时每隔多久切一个
         };
         Data_t _data;
         void _update_clock(bool updateNow = false);
