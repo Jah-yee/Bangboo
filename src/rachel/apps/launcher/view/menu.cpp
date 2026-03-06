@@ -86,17 +86,45 @@ void Launcher::_update_menu()
     {
         // 检查按钮输入
         bool any_button_pressed = false;
+        uint32_t now = HAL::Millis();
 
-        // Update navigation - 适应新的三键配置
+        // 松键时清零长按状态，下次按下重新计时
+        if (!HAL::GetButton(GAMEPAD::BTN_SELECT))
+        {
+            _data.long_press_select_hold_start = 0;
+            _data.long_press_select_last_repeat = 0;
+        }
+        if (!HAL::GetButton(GAMEPAD::BTN_RIGHT))
+        {
+            _data.long_press_right_hold_start = 0;
+            _data.long_press_right_last_repeat = 0;
+        }
+
+        // Update navigation - 适应新的三键配置；支持长按快速滚动（按住超过阈值后按名单连续切，音效密集如秒表哒哒哒）
         // SELECT 键向前导航
         if (HAL::GetButton(GAMEPAD::BTN_SELECT))
         {
             any_button_pressed = true;
-            if (!_data.menu_wait_button_released)
+            if (_data.long_press_select_hold_start == 0)
             {
+                // 刚按下：记下时刻，先切一次并播音效，进入「松键前不连发」状态
+                _data.long_press_select_hold_start = now;
+                _data.long_press_select_last_repeat = now;
                 HAL::PlayWavFile("/system_audio/Klick.wav");
                 _data.menu->goLast();
                 _data.menu_wait_button_released = true;
+            }
+            else
+            {
+                // 持续按住：超过阈值则进入快速滚动，按间隔节流，每步都播音效
+                uint32_t hold_ms = now - _data.long_press_select_hold_start;
+                if (hold_ms >= Data_t::LONG_PRESS_MS &&
+                    (now - _data.long_press_select_last_repeat) >= Data_t::LONG_PRESS_REPEAT_MS)
+                {
+                    _data.long_press_select_last_repeat = now;
+                    HAL::PlayWavFile("/system_audio/Klick.wav");
+                    _data.menu->goLast();
+                }
             }
         }
 
@@ -104,11 +132,24 @@ void Launcher::_update_menu()
         else if (HAL::GetButton(GAMEPAD::BTN_RIGHT))
         {
             any_button_pressed = true;
-            if (!_data.menu_wait_button_released)
+            if (_data.long_press_right_hold_start == 0)
             {
+                _data.long_press_right_hold_start = now;
+                _data.long_press_right_last_repeat = now;
                 HAL::PlayWavFile("/system_audio/Klick.wav");
                 _data.menu->goNext();
                 _data.menu_wait_button_released = true;
+            }
+            else
+            {
+                uint32_t hold_ms = now - _data.long_press_right_hold_start;
+                if (hold_ms >= Data_t::LONG_PRESS_MS &&
+                    (now - _data.long_press_right_last_repeat) >= Data_t::LONG_PRESS_REPEAT_MS)
+                {
+                    _data.long_press_right_last_repeat = now;
+                    HAL::PlayWavFile("/system_audio/Klick.wav");
+                    _data.menu->goNext();
+                }
             }
         }
 

@@ -49,6 +49,15 @@ namespace MOONCAKE::APPS
             uint32_t auto_startup_delay = 10000;  // 10秒无操作后自动启动
             uint32_t last_input_time = 0;  // 最后一次按钮操作时间
             std::string auto_startup_app_name = "Bangboo";  // 要自动启动的app名称
+
+            // 长按快速滚动：左/右键按住超过一定时间后，按名单顺序快速切换 App，松手即停。
+            // 单击仍为「按一下切一个」；长按先等 LONG_PRESS_MS 再以 LONG_PRESS_REPEAT_MS 间隔连续切。
+            uint32_t long_press_select_hold_start = 0;   // SELECT 按下时刻，0 表示当前未按住
+            uint32_t long_press_select_last_repeat = 0;  // 上次触发「滚动一步」的时刻（用于节流）
+            uint32_t long_press_right_hold_start = 0;    // RIGHT 同上
+            uint32_t long_press_right_last_repeat = 0;
+            static constexpr uint32_t LONG_PRESS_MS = 550;        // 按住超过此时长才进入快速滚动，避免与单击误触
+            static constexpr uint32_t LONG_PRESS_REPEAT_MS = 130; // 快速滚动时每隔多久切一个，类似秒表哒哒哒的节奏
         };
         Data_t _data;
         void _update_clock(bool updateNow = false);
