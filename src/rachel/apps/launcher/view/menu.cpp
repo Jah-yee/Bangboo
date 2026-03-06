@@ -12,6 +12,8 @@
 #include "lgfx/v1/lgfx_fonts.hpp"
 #include "menu_render_callback.hpp"
 #include "spdlog/spdlog.h"
+#include "../../../hal/hal.h"
+#include <cmath>
 
 using namespace MOONCAKE::APPS;
 
@@ -79,6 +81,68 @@ void Launcher::_create_menu()
     ((LauncherRenderCallBack*)_data.menu_render_cb)->bottomPanelAnim.setAnim(LVGL::ease_out, 240, 210, 600);
 }
 
+// 方向性摇晃检测：用 IMU 的加速度变化判断「左晃 / 右晃」，只在 Launcher 里当菜单导航用，
+// 不改 HAL，也不影响 Bangboo 等其它 App 的摇晃逻辑。一次有效晃只返回一次 -1 或 1，靠冷却保证只动一格。
+int Launcher::_get_shake_navigation()
+{
+    HAL::UpdateImuData();
+    const IMU::ImuData_t& imu = HAL::GetImuData();
+    uint32_t now = HAL::Millis();
+
+    // 用相邻两帧加速度差的模长当作「晃的强度」，带衰减，避免偶尔抖动一直挂着
+    if (_data.shake_nav_last_time > 0)
+    {
+        float dx = imu.accelX - _data.shake_nav_last_accel_x;
+        float dy = imu.accelY - _data.shake_nav_last_accel_y;
+        float dz = imu.accelZ - _data.shake_nav_last_accel_z;
+        float delta = std::sqrt(dx * dx + dy * dy + dz * dz);
+        _data.shake_nav_intensity = _data.shake_nav_intensity * _data.SHAKE_NAV_DECAY + delta;
+    }
+    _data.shake_nav_last_accel_x = imu.accelX;
+    _data.shake_nav_last_accel_y = imu.accelY;
+    _data.shake_nav_last_accel_z = imu.accelZ;
+    _data.shake_nav_last_time = now;
+
+    // 冷却期内一律不响应，避免一次晃被当成多次
+    if (now < _data.shake_nav_cooldown_until)
+    {
+        if (_data.shake_nav_intensity < _data.SHAKE_NAV_THRESHOLD * 0.1f)
+            _data.shake_nav_intensity = 0.0f;
+        return 0;
+    }
+
+    switch (_data.shake_nav_state)
+    {
+    case Data_t::SHAKE_NAV_IDLE:
+        if (_data.shake_nav_intensity > _data.SHAKE_NAV_THRESHOLD)
+        {
+            _data.shake_nav_state = Data_t::SHAKE_NAV_DETECTING;
+            _data.shake_nav_start_time = now;
+            _data.shake_nav_sum_accel_x = 0.0f;
+        }
+        break;
+
+    case Data_t::SHAKE_NAV_DETECTING:
+        _data.shake_nav_sum_accel_x += imu.accelX;
+        if ((now - _data.shake_nav_start_time) >= _data.SHAKE_NAV_DETECT_MS)
+        {
+            _data.shake_nav_state = Data_t::SHAKE_NAV_IDLE;
+            _data.shake_nav_cooldown_until = now + _data.SHAKE_NAV_COOLDOWN_MS;
+            _data.shake_nav_intensity = 0.0f;
+            return _data.shake_nav_sum_accel_x < 0 ? -1 : 1;
+        }
+        // 检测超时或强度掉下去都回到空闲，避免卡死（例如无 IMU 或数据异常）
+        if ((now - _data.shake_nav_start_time) >= _data.SHAKE_NAV_DETECT_TIMEOUT_MS ||
+            _data.shake_nav_intensity < _data.SHAKE_NAV_THRESHOLD * 0.3f)
+        {
+            _data.shake_nav_state = Data_t::SHAKE_NAV_IDLE;
+            _data.shake_nav_intensity = 0.0f;
+        }
+        break;
+    }
+    return 0;
+}
+
 void Launcher::_update_menu()
 {
     
@@ -135,10 +199,24 @@ void Launcher::_update_menu()
                 spdlog::error("open app: {} failed", app_packer->getAppName());
         }
 
-        // Unlock if no button is pressing
+        // 没有任何按键按下时才走这里：先放开「等按键松开」的锁，再看有没有左晃/右晃。
+        // 与上面 SELECT/RIGHT 分支用同一套指令：同一 _data.menu、同一 goLast()/goNext()、同一 Klick.wav；摇一次只动一格由 _get_shake_navigation 内部冷却保证。
         else
         {
             _data.menu_wait_button_released = false;
+            int shake = _get_shake_navigation();
+            if (shake == -1)
+            {
+                any_button_pressed = true;
+                HAL::PlayWavFile("/system_audio/Klick.wav");
+                _data.menu->goLast();  // 与 BTN_SELECT 分支一致
+            }
+            else if (shake == 1)
+            {
+                any_button_pressed = true;
+                HAL::PlayWavFile("/system_audio/Klick.wav");
+                _data.menu->goNext();  // 与 BTN_RIGHT 分支一致
+            }
         }
 
         // 更新最后输入时间
