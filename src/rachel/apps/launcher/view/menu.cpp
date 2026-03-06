@@ -69,9 +69,9 @@ void Launcher::_create_menu()
         i++;
     }
 
-    // Setup some widget shit
-    // Pass clock string pointer for redner
+    // 状态栏用同一套数据：时钟字符串 + 是否显示「即将进入 xxx」。callback 里只读这两个指针，本帧先改上面逻辑再 update，所以能完整交付。
     ((LauncherRenderCallBack*)_data.menu_render_cb)->setClock(&_data.clock);
+    ((LauncherRenderCallBack*)_data.menu_render_cb)->setAutoStartHintVisible(&_data.auto_startup_hint_visible);
 
     // Setup anims
     ((LauncherRenderCallBack*)_data.menu_render_cb)->statusBarAnim.setAnim(LVGL::ease_out, 0, 24, 600);
@@ -219,34 +219,48 @@ void Launcher::_update_menu()
             }
         }
 
-        // 更新最后输入时间
+        // 有按键/摇晃就刷新「最后操作时间」，并关掉「即将进入」提示，避免误以为马上要跳转
         if (any_button_pressed)
         {
             _data.last_input_time = HAL::Millis();
+            _data.auto_startup_hint_visible = false;
         }
 
-        // 检查自动启动条件
-        if (_data.auto_startup_enabled && 
-            (HAL::Millis() - _data.last_input_time) > _data.auto_startup_delay)
+        // 自动启动逻辑：只依赖 idle 时长，不碰其它模块。hint 标志给本帧后面的 menu->update() 里渲染用。
+        uint32_t idle_ms = HAL::Millis() - _data.last_input_time;
+        const uint32_t hint_threshold = _data.auto_startup_delay - Data_t::AUTO_STARTUP_HINT_LEAD_MS;
+
+        if (_data.auto_startup_enabled && idle_ms > _data.auto_startup_delay)
         {
-            // 查找 Bangboo 应用
+            // 到点：关掉提示，执行进入 App，成功后 closeApp 返回
+            _data.auto_startup_hint_visible = false;
             auto app_list = mcAppGetFramework()->getInstalledAppList();
-            for (size_t i = 1; i < app_list.size(); i++) { // 跳过 launcher (index 0)
-                if (app_list[i]->getAppName() == _data.auto_startup_app_name) {
-                    if (mcAppGetFramework()->createAndStartApp(app_list[i])) {
-                        spdlog::info("app: {} auto opened after 10s of inactivity", app_list[i]->getAppName());
+            for (size_t i = 1; i < app_list.size(); i++)
+            {
+                if (app_list[i]->getAppName() == _data.auto_startup_app_name)
+                {
+                    if (mcAppGetFramework()->createAndStartApp(app_list[i]))
+                    {
+                        spdlog::info("app: {} auto opened after {}s of inactivity", app_list[i]->getAppName(), _data.auto_startup_delay / 1000);
                         closeApp();
-                        return; // 启动成功后直接返回
+                        return;
                     }
                     break;
                 }
             }
-            
-            // 如果没找到Bangboo应用，重置计时器以避免一直尝试
             _data.last_input_time = HAL::Millis();
         }
+        else if (_data.auto_startup_enabled && idle_ms >= hint_threshold)
+        {
+            // 进入「提示窗口」：还剩几秒就自动进，状态栏本帧起会显示「即将进入 Bangboo」
+            _data.auto_startup_hint_visible = true;
+        }
+        else
+        {
+            _data.auto_startup_hint_visible = false;
+        }
 
-        // Update menu
+        // 下面 update 会调 renderCallback，里面按 auto_startup_hint_visible 决定状态栏显示时钟还是「即将进入 Bangboo」
         _data.menu->update(HAL::Millis());
 
         // Push frame buffer

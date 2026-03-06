@@ -22,7 +22,11 @@ private:
     int _x_offset;
     int _y_offset;
     int32_t _anim_value_buffer;
-    std::string* _clock;
+    std::string* _clock;               // Launcher 的时钟字符串，正常时状态栏显示这个
+    bool* _auto_start_hint_visible = nullptr;  // Launcher 在 _update_menu 里根据剩余时间设置，为 true 时改显示「即将进入 xxx」
+
+    static constexpr int STATUS_BAR_RECT_WIDTH = 200;   // 状态栏圆角块宽度，时钟和提示用同一宽度，切换时只换字不换形，更顺
+    static constexpr int STATUS_BAR_RECT_HEIGHT = 24;
 
 public:
     LauncherRenderCallBack() : _x_offset(0), _y_offset(0), _anim_value_buffer(0), _clock(nullptr) {}
@@ -30,6 +34,7 @@ public:
     LVGL::Anim_Path statusBarAnim;
     LVGL::Anim_Path bottomPanelAnim;
     inline void setClock(std::string* clock) { _clock = clock; }
+    inline void setAutoStartHintVisible(bool* p) { _auto_start_hint_visible = p; }
 
     /* Override render callback */
     void renderCallback(const std::vector<SMOOTH_MENU::Item_t*>& menuItemList,
@@ -51,23 +56,22 @@ public:
         // HAL::GetCanvas()->drawCenterString(_clock->c_str(), 120, _anim_value_buffer - 19, &fonts::Font0);
         // HAL::GetCanvas()->setTextSize(1);
 
-        // With anim - 圆角矩形包裹时间
+        // 状态栏：和 Launcher 约定用同一套指令（GetCanvas / fillSmoothRoundRect / drawCenterString / Font0）。
+        // 宽度固定为 STATUS_BAR_RECT_WIDTH，时钟和「即将进入 Bangboo」都用这块，只换文案不换尺寸，切换更顺。
         _anim_value_buffer = statusBarAnim.getValue(HAL::Millis());
-        if (_anim_value_buffer > 0) {
-            // 计算圆角矩形尺寸
-            int rect_width = 70;  // 适应大字体的宽度
-            int rect_height = 24; // 适应大字体的高度
-            int rect_x = (240 - rect_width) / 2; // 居中
-            // 使用动画值控制下滑效果，顶住屏幕顶部
-            int rect_y = 5 - rect_height + (_anim_value_buffer * rect_height / 24); // 从上方滑下，最终y=0
+        if (_anim_value_buffer > 0)
+        {
+            bool show_hint = (_auto_start_hint_visible && *_auto_start_hint_visible);
+            int rect_x = (240 - STATUS_BAR_RECT_WIDTH) / 2;
+            int rect_y = 5 - STATUS_BAR_RECT_HEIGHT + (_anim_value_buffer * STATUS_BAR_RECT_HEIGHT / 24);
 
-            // 绘制圆角矩形背景
-            HAL::GetCanvas()->fillSmoothRoundRect(rect_x, rect_y, rect_width, rect_height, 8, THEME_COLOR_NIGHT);
-            
-            // 绘制时间文字
+            HAL::GetCanvas()->fillSmoothRoundRect(rect_x, rect_y, STATUS_BAR_RECT_WIDTH, STATUS_BAR_RECT_HEIGHT, 8, THEME_COLOR_NIGHT);
             HAL::GetCanvas()->setTextSize(2);
             HAL::GetCanvas()->setTextColor(TFT_WHITE, THEME_COLOR_NIGHT);
-            HAL::GetCanvas()->drawCenterString(_clock->c_str(), 120, rect_y + 4, &fonts::Font0);
+            if (show_hint)
+                HAL::GetCanvas()->drawCenterString("即将进入 Bangboo", 120, rect_y + 4, &fonts::Font0);
+            else if (_clock)
+                HAL::GetCanvas()->drawCenterString(_clock->c_str(), 120, rect_y + 4, &fonts::Font0);
         }
 
         /* --------------------------------------------------------------------------------------------- */
